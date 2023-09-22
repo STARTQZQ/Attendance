@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+  <link rel="stylesheet" href="../../styles/common.css" />
+  <link rel="stylesheet" href="../../styles/page.css" />
+  <style>
+  .search-btn {
+    margin-left: 20px;
+  }
+  .tableBar{
+    justify-content: flex-start !important;
+  }
+  .icons{
+    display: inline-block;
+    float: left;
+    width: 30px;
+  }
+
+  </style>
+</head>
+<body>
+  <div class="dashboard-container" id="order-app">
+    <div class="container">
+      <!-- 搜索项 -->
+      <div class="tableBar">
+        <template>
+          <el-select v-model="workClass" placeholder="请选择类型"  >
+            <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+            </el-option>
+          </el-select>
+        </template>
+        <el-button type="primary" class="search-btn" @click="clock()">打卡</el-button>
+      </div>
+    </div>
+
+    <!-- 查看弹框部分 -->
+    <el-calendar>
+      <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+      <template
+              slot="dateCell"
+              slot-scope="{date, data}">
+        <p>
+          {{ data.day.split('-').slice(1).join('-') }}
+        </p>
+        <div class="icons"
+                v-for="(item, index) in calendarData"
+                :key="index"
+        >
+          <div  v-if="data.day == item.clockTime.split(' ')[0]">
+            {{item.workClass=="上班" ? '✔️' : ''}}
+          </div>
+          <div  v-if="data.day == item.clockTime.split(' ')[0]">
+            {{item.workClass=="下班" ? '✔️' : ''}}
+          </div>
+        </div>
+      </template>
+    </el-calendar>
+  </div>
+    <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="../../plugins/vue/vue.js"></script>
+    <!-- 引入组件库 -->
+    <script src="../../plugins/element-ui/index.js"></script>
+    <!-- 引入axios -->
+    <script src="../../plugins/axios/axios.min.js"></script>
+    <script src="../../js/request.js"></script>
+    <script src="../../api/clock.js"></script>
+    <script>
+      new Vue({
+        el: '#order-app',
+        data() {
+          return {
+            options: [{
+              value: '上班',
+              label: '上班'
+            }, {
+              value: '下班',
+              label: '下班'
+            }],
+             workClass:'',
+             idcard:'',
+            calendarData: [
+
+            ],
+          }
+        },
+        created() {
+          const staffInfo = window.localStorage.getItem('staffInfo')
+          if (staffInfo) {
+            this.idcard= JSON.parse(staffInfo).idcard
+          }
+          this.init()
+          // console.log(this.idcard)
+        },
+        methods: {
+          async init () {
+            console.log(this.idcard)
+            getClockData(this.idcard).then(res => {
+              if (res.code === 1) {
+                console.log(res)
+                this.calendarData = res.data || []
+                console.log(this.calendarData)
+              } else {
+                this.$message.error(res.msg || '操作失败')
+              }
+            }).catch(err => {
+              this.$message.error('请求出错了：' + err)
+            })
+          },
+
+          //点击实现打卡
+          clock() {
+            console.log(this.workClass)
+            if (this.workClass === "") {
+              this.$message.error("请选择打卡类型!")
+            } else {
+              const params = {
+                workClass:this.workClass,
+                idcard: this.idcard
+              }
+              addClock(params).then(res => {
+                if (res.code === 1) {
+                  this.$message.success('打卡成功！')
+                  } else {
+                  this.$message.error(res.msg || '操作失败')
+                }
+              }).catch(err => {
+                this.$message.error('请求出错了：' + err)
+              })
+            }
+            this.init()
+          },
+        }
+      })
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+  <link rel="stylesheet" href="../../styles/common.css" />
+  <link rel="stylesheet" href="../../styles/page.css" />
+</head>
+<body>
+<div class="addBrand-container" id="travel-add-app">
+  <div class="container">
+    <el-form
+            ref="ruleForm"
+            :model="ruleForm"
+            :rules="rules"
+            :inline="false"
+            label-width="180px"
+            class="demo-ruleForm"
+    >
+      <el-form-item
+              label="地址:"
+              prop="address"
+      >
+        <el-input v-model="ruleForm.address" placeholder="请输入地址"></el-input>
+      </el-form-item>
+      <el-form-item
+              label="开始时间:"
+              prop="begin"
+      >
+        <el-date-picker
+                v-model="ruleForm.begin"
+                type="date"
+                value-format="timestamp"
+                placeholder="选择日期">
+        </el-date-picker>
+      </el-form-item>
+      <el-form-item
+              label="结束时间:"
+              prop="end"
+      >
+        <el-date-picker
+                v-model="ruleForm.end"
+                type="date"
+                value-format="timestamp"
+                placeholder="选择日期">
+        </el-date-picker>
+      </el-form-item>
+
+      <el-form-item
+              label="事务:"
+              prop="affair"
+      >
+        <el-input
+                type="textarea"
+                :rows="2"
+                placeholder="请输入内容"
+                v-model="ruleForm.affair">
+        </el-input>
+      </el-form-item>
+
+      <div class="subBox address">
+        <el-form-item>
+          <el-button  @click="goBack()">
+            取消
+          </el-button>
+          <el-button
+                  type="primary"
+                  @click="submitForm('ruleForm')"
+          >
+            保存
+          </el-button>
+        </el-form-item>
+      </div>
+    </el-form>
+  </div>
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../api/travel.js"></script>
+<script src="../../js/validate.js"></script>
+<script src="../../js/index.js"></script>
+<script>
+  new Vue({
+    el: '#travel-add-app',
+    data() {
+      return {
+        ruleForm : {
+          begin:'',
+          end:'',
+          affair:'',
+          address:''
+        },
+      }
+    },
+    //时间选择
+    pickerOptions: {
+      disabledDate(time) {
+        return time.getTime() > Date.now();
+      }},
+    computed: {
+      rules () {
+        return {
+          address: [
+            {
+              required: true, 'validator': checkWorkClass, trigger: 'blur'
+            }
+          ],
+          begin: [
+            {
+              required: true, 'validator': checkBegin, trigger: 'blur'
+            }
+          ],
+          end: [
+            {
+              required: true, 'validator': checkEnd, trigger: 'blur'
+            }
+          ],
+          affair: [
+            {
+              required: true, 'validator': checkReason, trigger: 'blur'
+            }
+          ],
+        }
+      }
+    },
+    created() {
+    },
+    mounted() {
+    },
+    methods: {
+      async init () {
+      },
+      submitForm (formName) {
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            const params = {
+              ...this.ruleForm,
+              idcard: JSON.parse(localStorage.getItem('staffInfo')).idcard,
+              name: JSON.parse(localStorage.getItem('staffInfo')).name,
+              agree: '0',
+            }
+            addTravel(params).then(res => {
+              if (res.code === 1) {
+                this.$message.success('添加成功！')
+                this.goBack()
+              } else {
+                this.$message.error(res.msg || '操作失败')
+              }
+            }).catch(err => {
+              this.$message.error('请求出错了：' + err)
+            })
+
+          }
+          else {
+            console.log('error submit!!')
+            return false
+          }
+
+
+        })
+
+      },
+      goBack(){
+        window.parent.menuHandle({
+          id: '2',
+          url: '/face/page/travel/list.html',
+          name: '出差管理'
+        },false)
+      }
+    }
+  })
+</script>
+</body>
+</html>

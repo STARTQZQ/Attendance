@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.start.mapper.TravelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.start.domain.Travel">
+        <id column="id" property="id" />
+        <result column="idcard" property="idcard" />
+        <result column="apply_time" property="applyTime" />
+        <result column="begin" property="begin" />
+        <result column="end" property="end" />
+        <result column="address" property="address" />
+        <result column="affair" property="affair" />
+        <result column="name" property="name" />
+        <result column="agree" property="agree" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, idcard, apply_time, begin, end, address, affair, name, agree
+    </sql>
+
+</mapper>

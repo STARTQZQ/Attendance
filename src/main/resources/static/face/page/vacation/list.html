@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+  <link rel="stylesheet" href="../../styles/common.css" />
+  <link rel="stylesheet" href="../../styles/page.css" />
+  <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+  <script src="../../plugins/vue/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="../../plugins/element-ui/index.js"></script>
+  <!-- 引入axios -->
+  <script src="../../plugins/axios/axios.min.js"></script>
+  <script src="../../js/request.js"></script>
+  <script src="../../api/vacation.js"></script>
+  <style>
+    #member-app  .notAdmin::after{
+      border: 0 !important;
+
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container" id="member-app">
+    <div class="container">
+      <div class="tableBar">
+        <el-button
+          type="primary"
+          @click="addMemberHandle('add')"
+        >
+          + 假期申请
+        </el-button>
+      </div>
+      <el-table
+        :data="tableData"
+        stripe
+        class="tableBox"
+      >
+        <el-table-column
+                prop="workClass"
+                label="类型"
+        ></el-table-column>
+        <el-table-column label="开始时间">
+          <template slot-scope="scope">
+            {{scope.row.begin.split(' ')[0] }}
+          </template>
+        </el-table-column>
+        <el-table-column label="结束时间">
+          <template slot-scope="scope">
+            {{scope.row.end.split(' ')[0] }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作时间">
+          <template slot-scope="scope">
+            {{scope.row.applyTime.split(' ')[0] }}
+          </template>
+        </el-table-column>
+        <el-table-column
+                label="操作"
+                width="160"
+                align="center"
+        >
+          <template slot-scope="scope">
+            <el-button
+                    type="text"
+                    size="small"
+                    class="blueBug"
+                    @click="dialogVisible = true"
+            >
+              详情
+            </el-button>
+            <el-dialog
+                    title="详细原因"
+                    :visible.sync="dialogVisible"
+                    width="30%"
+                    :append-to-body='true'>
+              <span>{{scope.row.reason}}</span>
+              <span slot="footer" class="dialog-footer">
+            <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+           </span>
+            </el-dialog>
+            <el-button
+                    type="text"
+                    size="small"
+                    class="blueBug"
+                    @click="statusHandle(scope.row)"
+            >
+              {{ scope.row.agree == '0' ? '未同意' : '已同意' }}
+            </el-button>
+            <el-button
+                    type="text"
+                    size="small"
+                    class="delBut non"
+                    @click="deleteHandle('单删', scope.row.id)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        class="pageList"
+        :page-sizes="[10, 20, 30, 40]"
+        :page-size="pageSize"
+        layout="total, sizes,   prev, pager, next, jumper"
+        :total="counts"
+        :current-page.sync="page"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      ></el-pagination>
+    </div>
+  </div>
+    <script>
+      new Vue({
+        el: '#member-app',
+        data() {
+          return {
+             input: '',
+             counts: 0,
+             page: 1,
+             pageSize: 10,
+             tableData : [],
+             id : '',
+             status : '',
+            idcard:'',
+            dialogVisible: false
+
+          }
+        },
+        computed: {},
+        created() {
+          this.idcard=JSON.parse(localStorage.getItem('staffInfo')).idcard
+          this.init()
+          this.user = JSON.parse(localStorage.getItem('staffInfo')).username
+        },
+        mounted() {
+        },
+        methods: {
+          async init () {
+            const params = {
+              page: this.page,
+              pageSize: this.pageSize,
+              idcard:this.idcard
+            }
+            // console.log(params.idcard)
+            await getMyMemberList(params).then(res => {
+              if (String(res.code) === '1') {
+                this.tableData = res.data.records || []
+                this.counts = res.data.total
+              }
+            }).catch(err => {
+              this.$message.error('请求出错了：' + err)
+            })
+          },
+          // 删除
+          deleteHandle (type, id) {
+            this.$confirm('确认删除, 是否继续?', '确定删除', {
+              'confirmButtonText': '确定',
+              'cancelButtonText': '取消',
+            }).then(() => {
+              deleteTravel(type === '批量' ? this.checkList.join(',') : id).then(res => {
+                if (res.code === 1) {
+                  this.$message.success('删除成功！')
+                  this.handleQuery()
+                } else {
+                  this.$message.error(res.msg || '操作失败')
+                }
+              }).catch(err => {
+                this.$message.error('请求出错了：' + err)
+              })
+            })
+          },
+          handleQuery() {
+            this.page = 1;
+            this.init();
+          },
+           // 添加
+          addMemberHandle () {
+              window.parent.menuHandle({
+                id: '2',
+                url: '/face/page/vacation/add.html',
+                name: '添加'
+              })
+          },
+          handleSizeChange (val) {
+            this.pageSize = val
+            this.init()
+          },
+          handleCurrentChange (val) {
+            this.page = val
+            this.init()
+          }
+        }
+      })
+    </script>
+</body>
+</html>
